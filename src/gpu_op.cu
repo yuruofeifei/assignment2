@@ -1,4 +1,5 @@
 #include "./c_runtime_api.h"
+#include <algorithm>
 #include <cassert>
 #include <cstdio>
 #include <cublas_v2.h>
@@ -53,6 +54,11 @@ __global__ void matrix_softmax_cross_entropy_kernel(int nrow, int ncol,
 }
 
 int DLGpuArraySet(DLArrayHandle arr, float value) { /* TODO: Your code here */
+  int size = 1;
+  for (int i = 0; i < arr->ndim; i++) {
+    size *= arr->shape[i];
+  }
+  std::fill(arr->data, size, value);
   return 0;
 }
 
