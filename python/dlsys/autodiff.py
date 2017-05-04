@@ -627,9 +627,35 @@ class Executor(object):
         """
         """TODO: Your code here"""
         self.node_to_arr_map = {}
+        #self.node_to_arr_map = {}
+        #for node in self.topo_order:
+        #    if node not in feed_shapes:
+        #        self.node_to_arr_map[node] = ndarray.empty(self.node_to_shape_map[node], ctx=self.ctx)
+        #return
+        counter = {}
+        for node in self.topo_order:
+            if node not in feed_shapes and node not in self.eval_node_list:
+                counter[node] = 0
+            for n in node.inputs:
+                if n in counter:
+                    counter[n] += 1
+        
+        pool = {}
         for node in self.topo_order:
             if node not in feed_shapes:
-                self.node_to_arr_map[node] = ndarray.empty(self.node_to_shape_map[node], ctx=self.ctx)
+                shape = self.node_to_shape_map[node]
+                if shape not in pool:
+                    pool[shape] = []
+                if len(pool[shape]) == 0:
+                    pool[shape].append(ndarray.empty(shape, ctx=self.ctx))
+                mem = pool[shape].pop(0)
+                self.node_to_arr_map[node] = mem
+            for n in node.inputs:
+                if n in counter:
+                    counter[n] -= 1
+                    if counter[n] == 0:
+                        pool[self.node_to_shape_map[n]].append(self.node_to_arr_map[n])
+
 
     def run(self, feed_dict, convert_to_numpy_ret_vals=False):
         """
